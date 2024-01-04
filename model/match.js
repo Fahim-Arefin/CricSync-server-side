@@ -2,6 +2,10 @@
 const mongoose = require("mongoose");
 
 const matchSchema = new mongoose.Schema({
+  author: {
+    type: String,
+    require: true,
+  },
   team1: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Team",
@@ -16,7 +20,18 @@ const matchSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  // Add more match-related fields as needed
+  stadium: {
+    type: String,
+    required: true,
+  },
+  start: {
+    type: Date,
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 const Match = mongoose.model("Match", matchSchema);

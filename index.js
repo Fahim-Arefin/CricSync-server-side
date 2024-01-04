@@ -9,6 +9,7 @@ const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const User = require("./model/user");
 const Team = require("./model/team");
+const Match = require("./model/match");
 
 //connection with mongoose
 // -------------------------------------------------------------------------------------------------------------------
@@ -190,6 +191,37 @@ app.post("/teams/new", async (req, res) => {
 app.get("/teams", async (req, res) => {
   try {
     const data = await Team.find({});
+    res.send(data);
+  } catch (error) {
+    res.send(error);
+    console.log(error);
+  }
+});
+
+// Match Route
+// --------------------------------------------------------------------------------------------------------------
+// create a team
+app.post("/matches/new", async (req, res) => {
+  try {
+    const body = req.body;
+
+    // Create a new team instance
+    const newMatch = new Match(body);
+
+    // Save the team to the database
+    const savedMatch = await newMatch.save();
+
+    res.status(201).json(savedMatch);
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// get all matches
+app.get("/matches", async (req, res) => {
+  try {
+    const data = await Match.find({}).populate("team1").populate("team2");
     res.send(data);
   } catch (error) {
     res.send(error);
