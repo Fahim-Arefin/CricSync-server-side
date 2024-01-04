@@ -8,6 +8,7 @@ const mongoose = require("mongoose");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const User = require("./model/user");
+const Team = require("./model/team");
 
 //connection with mongoose
 // -------------------------------------------------------------------------------------------------------------------
@@ -135,7 +136,7 @@ app.get("/users", async (req, res) => {
     console.log(error);
   }
 });
-// get a user
+// get a user based on email
 app.get("/users/:email", async (req, res) => {
   try {
     const { email } = req.params;
@@ -147,6 +148,7 @@ app.get("/users/:email", async (req, res) => {
   }
 });
 
+// get a user based on id
 app.delete("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
@@ -159,3 +161,38 @@ app.delete("/users/:id", async (req, res) => {
 });
 
 // --------------------------------------------------------------------------------------------------------------
+
+// Team Route
+// --------------------------------------------------------------------------------------------------------------
+// create a team
+app.post("/teams/new", async (req, res) => {
+  try {
+    const { author, name, players } = req.body;
+
+    // Create a new team instance
+    const newTeam = new Team({
+      author,
+      name,
+      players,
+    });
+
+    // Save the team to the database
+    const savedTeam = await newTeam.save();
+
+    res.status(201).json(savedTeam);
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// get all team
+app.get("/teams", async (req, res) => {
+  try {
+    const data = await Team.find({});
+    res.send(data);
+  } catch (error) {
+    res.send(error);
+    console.log(error);
+  }
+});
