@@ -200,17 +200,163 @@ app.get("/teams", async (req, res) => {
 
 // Match Route
 // --------------------------------------------------------------------------------------------------------------
-// create a team
+// create a Match
 app.post("/matches/new", async (req, res) => {
   try {
     const body = req.body;
-
-    // Create a new team instance
     const newMatch = new Match(body);
-
-    // Save the team to the database
     const savedMatch = await newMatch.save();
 
+    res.status(201).json(savedMatch);
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Update a Match
+app.patch("/matches/score/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const match = await Match.findById(id);
+    // console.log(body);
+    let team;
+    if (body.battingTeam === match.team1.name) {
+      team = "team1";
+    } else {
+      team = "team2";
+    }
+
+    if (team === "team1") {
+      if (
+        match.team1.ballPlayed === parseInt(match.overs) * 6 ||
+        match.team1.totalWicket === 10
+      ) {
+        console.log("Finished....");
+        res.send({ msg: "team1" });
+        return;
+      }
+      match.team1.ballPlayed = parseInt(match.team1.ballPlayed) + 1;
+      for (let player of match.team1.players) {
+        if (player._id == body.batsman) {
+          if (player.isOut) {
+            res.send({ invalid: "already out" });
+            return;
+          }
+          if (parseInt(body.runPerBall) === 6) {
+            player.sixes = parseInt(player.sixes) + 1;
+          }
+          if (parseInt(body.runPerBall) === 4) {
+            player.fours = parseInt(player.fours) + 1;
+          }
+
+          player.runs = parseInt(player.runs) + parseInt(body.runPerBall);
+          player.balls = parseInt(player.balls) + 1;
+
+          // sum total
+          match.team1.totalScore =
+            parseInt(body.runPerBall) + match.team1.totalScore;
+        }
+      }
+    } else {
+      if (
+        match.team2.ballPlayed === parseInt(match.overs) * 6 ||
+        match.team2.totalWicket === 10
+      ) {
+        console.log("Finished....");
+        res.send({ msg: "team2" });
+        return;
+      }
+      match.team2.ballPlayed = parseInt(match.team2.ballPlayed) + 1;
+      for (let player of match.team2.players) {
+        if (player._id == body.batsman) {
+          if (player.isOut) {
+            res.send({ invalid: "already out" });
+            return;
+          }
+          if (parseInt(body.runPerBall) === 6) {
+            player.sixes = parseInt(player.sixes) + 1;
+          }
+          if (parseInt(body.runPerBall) === 4) {
+            player.fours = parseInt(player.fours) + 1;
+          }
+          player.runs = parseInt(player.runs) + parseInt(body.runPerBall);
+          player.balls = parseInt(player.balls) + 1;
+          // sum total
+          match.team2.totalScore =
+            parseInt(body.runPerBall) + match.team2.totalScore;
+        }
+      }
+    }
+
+    const savedMatch = await match.save();
+    res.status(201).json(savedMatch);
+  } catch (error) {
+    console.error("Error creating team:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Update a Match out
+app.patch("/matches/out/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const match = await Match.findById(id);
+    // console.log(body);
+    let team;
+    if (body.battingTeam === match.team1.name) {
+      team = "team1";
+    } else {
+      team = "team2";
+    }
+
+    if (team === "team1") {
+      if (
+        match.team1.ballPlayed === parseInt(match.overs) * 6 ||
+        match.team1.totalWicket === 10
+      ) {
+        console.log("Finished....");
+        res.send({ msg: "finished" });
+        return;
+      }
+      for (let player of match.team1.players) {
+        if (player._id == body.batsman) {
+          if (player.isOut) {
+            res.send({ msg: "team1" });
+            return;
+          }
+          player.isOut = true;
+          // sum wicket
+          match.team1.totalWicket = match.team1.totalWicket + 1;
+          match.team1.ballPlayed = match.team1.ballPlayed + 1;
+        }
+      }
+    } else {
+      if (
+        match.team2.ballPlayed === parseInt(match.overs) * 6 ||
+        match.team2.totalWicket === 10
+      ) {
+        console.log("Finished....");
+        res.send({ msg: "finished" });
+        return;
+      }
+      for (let player of match.team2.players) {
+        if (player._id == body.batsman) {
+          if (player.isOut) {
+            res.send({ msg: "team2" });
+            return;
+          }
+          player.isOut = true;
+          // sum wicket
+          match.team2.totalWicket = match.team2.totalWicket + 1;
+          match.team2.ballPlayed = match.team2.ballPlayed + 1;
+        }
+      }
+    }
+
+    const savedMatch = await match.save();
     res.status(201).json(savedMatch);
   } catch (error) {
     console.error("Error creating team:", error);
@@ -221,10 +367,78 @@ app.post("/matches/new", async (req, res) => {
 // get all matches
 app.get("/matches", async (req, res) => {
   try {
-    const data = await Match.find({}).populate("team1").populate("team2");
+    const data = await Match.find({});
     res.send(data);
   } catch (error) {
     res.send(error);
     console.log(error);
+  }
+});
+// get a matches
+app.get("/matches/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = await Match.findById(id);
+    res.send(data);
+  } catch (error) {
+    res.send(error);
+    console.log(error);
+  }
+});
+
+// get my matches
+app.get("/matches/my/:email", async (req, res) => {
+  try {
+    const { email } = req.params;
+    const data = await Match.find({ author: email });
+    res.send(data);
+  } catch (error) {
+    res.send(error);
+    console.log(error);
+  }
+});
+
+// reset match
+app.post("/matches/reset/:matchId", async (req, res) => {
+  try {
+    const matchId = req.params.matchId;
+
+    // Fetch the match by its ID
+    const match = await Match.findById(matchId);
+
+    // Check if the match exists
+    if (!match) {
+      return res.status(404).json({ message: "Match not found" });
+    }
+
+    // Reset match values to their default state
+    match.team1.players.forEach((player) => {
+      player.runs = 0;
+      player.balls = 0;
+      player.fours = 0;
+      player.sixes = 0;
+      player.isOut = false;
+    });
+
+    match.team2.players.forEach((player) => {
+      player.runs = 0;
+      player.balls = 0;
+      player.fours = 0;
+      player.sixes = 0;
+      player.isOut = false;
+    });
+
+    match.team1.ballPlayed = 0;
+    match.team1.totalScore = 0;
+
+    match.team2.ballPlayed = 0;
+    match.team2.totalWicket = 0;
+
+    const savedData = await match.save();
+
+    return res.status(200).json(savedData);
+  } catch (error) {
+    console.error("Error resetting match values:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
   }
 });

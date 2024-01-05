@@ -10,9 +10,25 @@ const playerSchema = new mongoose.Schema({
     type: Number,
     default: 0,
   },
+  balls: {
+    type: Number,
+    default: 0,
+  },
+  fours: {
+    type: Number,
+    default: 0,
+  },
+  sixes: {
+    type: Number,
+    default: 0,
+  },
   wickets: {
     type: Number,
     default: 0,
+  },
+  isOut: {
+    type: Boolean,
+    default: false,
   },
 });
 
@@ -25,7 +41,19 @@ const teamSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  ballPlayed: {
+    type: Number,
+    default: 0,
+  },
   players: [playerSchema],
+  totalScore: {
+    type: Number,
+    default: 0,
+  },
+  totalWicket: {
+    type: Number,
+    default: 0,
+  },
   createdAt: {
     type: Date,
     default: Date.now,

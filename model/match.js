@@ -1,21 +1,14 @@
 // Match.js
 const mongoose = require("mongoose");
+const Team = require("./team");
 
 const matchSchema = new mongoose.Schema({
   author: {
     type: String,
     require: true,
   },
-  team1: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Team",
-    required: true,
-  },
-  team2: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Team",
-    required: true,
-  },
+  team1: Team.schema,
+  team2: Team.schema,
   overs: {
     type: Number,
     required: true,
